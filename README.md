@@ -1,2 +1,2 @@
 # Unity_3DHexTiles
-A bunch of files used to help in navigating and operating movements on a 3D TileMap based games.
+A bunch of files used within Unity to help create a 3D based tile games.
