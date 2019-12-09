@@ -1,11 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class HexTile_Set : MonoBehaviour
 {
 
-    //Don't make it a mono behaviour
+    //Don't make it a mono behaviour or maybe keep it
     //keep it for now but later on change to a class so it can instanitate dynamic Hextile dimensions on combat instances
     public GameObject hexagontile;
     public Material material_flash;
@@ -13,7 +14,7 @@ public class HexTile_Set : MonoBehaviour
     public int scaling_factor;
     [SerializeField] public  int rows;
     [SerializeField] public  int columns;
-    [SerializeField] public GameObject[,] TileSet;
+    [SerializeField] public GameObject[,] TileSet; //refactor for Tile values
 
 
     // Start is called before the first frame update
@@ -71,18 +72,84 @@ public class HexTile_Set : MonoBehaviour
     }
 
     // Update is called once per frame
-    public List<Coordinate> HexLine(Coordinate start_tile, int range, float direction) {
+
+    public List<Coordinate> HexLine(Tile_Values start_tile, Tile_Values end_tile, int direction) {
+
         List<Coordinate> output_list = new List<Coordinate>();
 
-        int tile_x = start_tile.getColumn;
-        int tile_z = start_tile.getRow;
+        Coordinate retrieved = start_tile.getTile_Coord;
+        
+        Debug.Log("Should Enter");
+        for (int a = 0 ; !end_tile.getTile_Coord.Compare_Coordinates(retrieved); a++) {
+            Debug.Log("Dit Enter");
+            Debug.Log("1");
+            retrieved = GetNeighbour(retrieved, direction);
+            Debug.Log("2");
+
+            if(a >= 20) {
+                Debug.Log("Exceeded 20 increments");
+                break;
+            } else if ((-1 < retrieved.getColumn && retrieved.getColumn < this.columns) &&
+                (-1 < retrieved.getRow && retrieved.getRow < this.rows)) {
+                Debug.Log("3");
+                output_list.Add(retrieved);
+                Debug.Log("4");
+            }  else {
+                Debug.Log("5");
+                Debug.Log(string.Format("Caught Error:Hexline {0},{1} will reach out to {2},{3}, an out of bounds tile", start_tile.getTile_Column , start_tile.getTile_Row, retrieved.getColumn, retrieved.getRow));
+                break;
+            }
+        }
+        
+        string plop = "";
+        
+        foreach (Coordinate coord in output_list) {
+            Debug.Log(coord.ToString());
+            plop += coord.ToString();
+        }
+        return output_list;
+    }
+
+    public List<Coordinate> HexLine(Coordinate start_coord, int range, int direction) {
+        List<Coordinate> output_list = new List<Coordinate>();
+
+        int tile_x = start_coord.getColumn;
+        int tile_z = start_coord.getRow;
+
+        Coordinate retrieved = null;
+        
+        for (int a = 0; a < range; a++) {
+
+            retrieved = GetNeighbour(start_coord, direction);
+
+
+            if ((-1 < tile_x && tile_x < this.columns) &&
+                (-1 < tile_z && tile_z < this.rows)) {
+                // Debug.Log(string.Format("Tile  x|z : {0}|{1}", tile_x, tile_z));
+                // tile_set.getTile(tile_x, tile_z).GetComponent<Renderer>().material = line_highlight;
+                output_list.Add(retrieved);
+            } else {
+                Debug.Log(string.Format("Caught Error:Hexline {0},{1} will reach out to {2},{3}", start_coord.getColumn, start_coord.getRow, tile_x, tile_z));
+                //break;
+            }
+        }
+        
+        return output_list;
+    }
+
+    public List<Coordinate> HexLine(Coordinate start_coord, Coordinate end_tile, int direction) {
+
+        List<Coordinate> output_list = new List<Coordinate>();
+
+        int tile_x = start_coord.getColumn;
+        int tile_z = start_coord.getRow;
 
         Coordinate retrieved = null;
 
-        if (start_tile.getRow % 2 == 0) {
-            for (int a = 0; a < range; a++) {
+        
+            for (; !end_tile.Compare_Coordinates(retrieved); ) {
 
-                retrieved = GetNeighbour_Tile_Even(start_tile, direction);
+                retrieved = GetNeighbour(start_coord, direction);
 
 
                 if ((-1 < tile_x && tile_x < this.columns) &&
@@ -91,30 +158,18 @@ public class HexTile_Set : MonoBehaviour
                     // tile_set.getTile(tile_x, tile_z).GetComponent<Renderer>().material = line_highlight;
                     output_list.Add(retrieved);
                 } else {
-                    Debug.Log(string.Format("Caught Error:Hexline {0},{1} will reach out to {2},{3}", start_tile.getColumn, start_tile.getRow, tile_x, tile_z));
+                    Debug.Log(string.Format("Caught Error:Hexline {0},{1} will reach out to {2},{3}", start_coord.getColumn, start_coord.getRow, tile_x, tile_z));
                     //break;
                 }
             }
-        } else {
-            for (int a = 0; a < range; a++) {
-
-                retrieved = GetNeighbour_Tile_Odd(start_tile, direction);
-
-                if ((-1 < tile_x && tile_x < this.columns) &&
-                    (-1 < tile_z && tile_z < this.rows)) {
-                    //     Debug.Log(string.Format("Tile  x|z : {0}|{1}", tile_x, tile_z));
-                    // tile_set.getTile(tile_x, tile_z).GetComponent<Renderer>().material = line_highlight;
-                    output_list.Add(retrieved);
-                } else {
-                    Debug.Log(string.Format("Caught Error:Hexline {0},{1} will reach out to {2},{3}", start_tile.getColumn, start_tile.getRow, tile_x, tile_z));
-                }
-
-            }
-        }
+       
         return output_list;
+
+
+       
     }
 
-    public List<Coordinate> HexLine(int x, int y, int range, float direction) {
+    public List<Coordinate> HexLine(int x, int y, int range, int direction) {
         List<Coordinate> output_list = new List<Coordinate>();
 
         int tile_x = x;
@@ -124,7 +179,7 @@ public class HexTile_Set : MonoBehaviour
 
         if (tile_z % 2 == 0) {
             for (int a = 0; a < range; a++) {
-                retrieved = GetNeighbour_Tile_Even(x, y, direction);
+                retrieved = GetNeighbour(new Coordinate(x,y), direction);
 
                 if ((-1 < tile_x && tile_x < this.columns) &&
                     (-1 < tile_z && tile_z < this.rows)) {
@@ -137,7 +192,7 @@ public class HexTile_Set : MonoBehaviour
         } else {
             for (int a = 0; a < range; a++) {
 
-                retrieved = GetNeighbour_Tile_Odd(x, y, direction);
+                retrieved = GetNeighbour(new Coordinate(x,y) , direction);
 
                 if ((-1 < tile_x && tile_x < this.columns) &&
                     (-1 < tile_z && tile_z < this.rows)) {
@@ -153,28 +208,113 @@ public class HexTile_Set : MonoBehaviour
 
     }
 
-    public List<Coordinate> HexCone(Coordinate start_tile, int range, float direction) {
+    public List<Coordinate> HexCone(Coordinate start_coord, int range, int direction) {
+        int augmented_direction = direction;
 
-        //use your current position as the start
-        // go towards one of direction boundaries of the cone
-        // forloop or increment across based on range
-        // increment that increment on the opposite cone boundary
+        if (direction != 300) {
+            augmented_direction += 60;
+        } else {
+            augmented_direction = 0;
+        }
+
+        List<Coordinate> coords = new List<Coordinate>();
+        for (int a = 0; a <= range; a++) {
+            if (a!= 0) {
+                Coordinate coord = GetCoord_byRange(start_coord, augmented_direction, a);
+
+                coords.AddRange(HexLine(coord, range, augmented_direction));
+
+            } else {
+                coords.AddRange(HexLine(start_coord, range, augmented_direction));
+            }
+        }
+
         return null;
     }
+   
+    public Hashtable HexCircleArea_HT(Coordinate start_coord, int range) {
+      
+        
+        Hashtable ht = new Hashtable();
+        for (int a = 1; a <= range; a++) {
+            List<Coordinate> surroundingTiles = new List<Coordinate>();
 
-    public List<Coordinate> HexCircle(Coordinate start_tile, int range) {
-        //Create HashSet
-        //Find Neighbours of start tile
-        //store those neighbours,
+            if (a > 1) {
+                ht.Add(a , HexCircleLine(start_coord, a));
+            } else { 
+                ht.Add(1, GetAllNeighbours(start_coord));
+                         }
 
-        //Find neighbours of the first neightbours 
+        }
+
+        //Use hashtable or dictionary for unique coordinates handling
+
+        return ht;
+    }
+ 
+    public List<Coordinate> HexCircleArea_List(Coordinate start_coord, int range) {
+
+        List<Coordinate> coord_list = new List<Coordinate>();
+
+        for (int a = 1; a <= range; a++) {
+            List<Coordinate> surroundingTiles = new List<Coordinate>();
+
+            if (a > 1) {
+                coord_list.AddRange(HexCircleLine(start_coord, a));
+            } else {
+                coord_list.AddRange(GetAllNeighbours(start_coord));
+            }
+
+        }
+
+       
 
 
-        return null;
+
+        return coord_list;
+
     }
 
-    public List<Coordinate> HexConvergence(Coordinate start_tile) {
-        return null;
+    private List<Coordinate> HexCircleLine(Coordinate start_coord , int range) {
+
+        HashSet<Coordinate> coordinateSet = new HashSet<Coordinate>();
+        //go 240 down by a range
+
+        Coordinate coord = GetCoord_byRange(start_coord,240, range);
+
+
+        for (int a = 0; a < 360; a+=60) {
+            List<Coordinate> list = HexLine(coord, range, a);
+
+            foreach (Coordinate line_coord in list) {
+                coordinateSet.Add(line_coord);
+            }
+            coord = list[range];
+
+        }
+
+        return coordinateSet.ToList();
+        
+    }
+
+    public List<Coordinate>[] HexConvergence(Coordinate startcoord, int range) {
+        List<Coordinate>[] coordinates = new List<Coordinate>[range];
+        for (int a = 0; a < range; a++) {
+            List<Coordinate> coordinate_list = new List<Coordinate>();
+            if (a != 0) {
+                
+                for (int b = 0; b < 360; a += 360) {
+                    coordinate_list.Add(GetCoord_byRange(startcoord, b, range));
+                }
+            
+            } else {
+                coordinate_list.Add(startcoord);
+            }
+
+            coordinates[a] = coordinate_list;
+        }
+
+        return coordinates;
     }
 
     public bool IsOdd(int val) {
@@ -186,9 +326,27 @@ public class HexTile_Set : MonoBehaviour
     }
 
 
+    public Coordinate GetCoord_byRange(Coordinate coord, int direction, int range) {
 
+        Coordinate coord_buff = coord;
+        for (int a = 0; a <= range; a++) {
+            coord_buff = GetNeighbour(coord_buff, direction);
+        }
+        return coord_buff;
+        //get a single tile by direction and range aswell as its initinal starting tile position
+    }
 
-    public bool isNeighbour(Tile_Values main_tile, Tile_Values other_tile) {
+    public Coordinate GetCoord_byRange(Tile_Values tile, int direction, int range) {
+
+        Coordinate coord_buff = tile.getTile_Coord;
+        for (int a = 0; a <= range; a++) {
+            coord_buff = GetNeighbour(coord_buff, direction);
+        }
+        return coord_buff;
+        //get a single tile by direction and range aswell as its initinal starting tile position
+    }
+
+    public bool IsNeighbour(Tile_Values main_tile, Tile_Values other_tile) {
 
 
         int main_col = main_tile.getTile_Column;
@@ -205,7 +363,7 @@ public class HexTile_Set : MonoBehaviour
 
     }
 
-    public bool isNeighbour(Coordinate main_tile, Coordinate other_tile) {
+    public bool IsNeighbour(Coordinate main_tile, Coordinate other_tile) {
 
 
         int main_col = main_tile.getColumn;
@@ -259,171 +417,56 @@ public class HexTile_Set : MonoBehaviour
         }
     }
 
+    private List<Coordinate> GetAllNeighbours(Coordinate coord) {
+        //for circule thingo and possibly others;
+      
 
-
-
-    private Coordinate GetNeighbour_Tile_Even(int column, int row, float direction) {
-        int col_buff = column;
-        int row_buff = row;
-        if (direction == 00.0f) {
-            col_buff += 1;
-        } else if (direction == 60.0f) {
-            if (IsOdd(row)) {
-                col_buff += 1;
-                row_buff += 1;
-            } else {
-                row_buff += 1;
+            //get all neighbours of a coordinate from its 6 sourrounding tiles
+            List<Coordinate> output_list = new List<Coordinate>();
+            for (int a = 0; a <= 360; a += 60) {
+                output_list.Add( GetNeighbour(coord, a));
             }
-        } else if (direction == 120.0f) {
-            if (IsOdd(row)) {
-                row_buff = 1;
-            } else {
-                col_buff = -1;
-                row_buff = +1;
-            }
-        } else if (direction == 180.0f) {
-            col_buff -= 1;
-        } else if (direction == 240.0f) {
-            if (IsOdd(row)) {
-                row_buff += 1;
-            } else {
-                col_buff -= 1;
-                row_buff -= 1;
-            }
-        } else if (direction == 300.0f) {
-            if (IsOdd(row)) {
-                col_buff += 1;
-                row_buff -= 1;
-            } else {
-                row_buff -= 1;
-            }
-        } else {
-            Debug.Log(string.Format("Break", col_buff, row_buff));
-        }
-        return new Coordinate(col_buff, row_buff);
+        return output_list;
     }
 
-    private Coordinate GetNeighbour_Tile_Even(Coordinate coord, float direction) {
-        int hex_Row = coord.getRow;
+
+
+
+    private Coordinate GetNeighbour(Coordinate coord, int direction) {
+        int row_pos = coord.getRow;
         int col_buff = coord.getColumn;
         int row_buff = coord.getRow;
         if (direction == 00.0f) {
             col_buff += 1;
         } else if (direction == 60.0f) {
-            if (IsOdd(hex_Row)) {
+            if (IsOdd(row_pos)) {
                 col_buff += 1;
                 row_buff += 1;
             } else {
                 row_buff += 1;
             }
         } else if (direction == 120.0f) {
-            if (IsOdd(hex_Row)) {
-                row_buff = 1;
-            } else {
-                col_buff = -1;
-                row_buff = +1;
-            }
-        } else if (direction == 180.0f) {
-            col_buff -= 1;
-        } else if (direction == 240.0f) {
-            if (IsOdd(hex_Row)) {
+            if (IsOdd(row_pos)) {
                 row_buff += 1;
             } else {
                 col_buff -= 1;
-                row_buff -= 1;
-            }
-        } else if (direction == 300.0f) {
-            if (IsOdd(hex_Row)) {
-                col_buff += 1;
-                row_buff -= 1;
-            } else {
-                row_buff -= 1;
-            }
-        } else {
-            Debug.Log(string.Format("Break", col_buff, row_buff));
-        }
-        return new Coordinate(col_buff, row_buff);
-    }
-
-    private Coordinate GetNeighbour_Tile_Odd(int column, int row, float direction) {
-
-        int col_buff = column;
-        int row_buff = row;
-        if (direction == 00.0f) {
-            col_buff = +1;
-
-        } else if (direction == 60.0f) {
-            if (IsOdd(row)) {
-                row_buff += 1;
-            } else {
-                col_buff += 1;
-                row_buff += 1;
-            }
-        } else if (direction == 120.0f) {
-            if (IsOdd(row)) {
-                col_buff -= 1;
-                row_buff += 1;
-            } else {
                 row_buff += 1;
             }
         } else if (direction == 180.0f) {
             col_buff -= 1;
         } else if (direction == 240.0f) {
-            if (IsOdd(row)) {
-                col_buff -= 1;
+            if (IsOdd(row_pos)) {
                 row_buff -= 1;
             } else {
-                row_buff = -1;
+                col_buff -= 1;
+                row_buff -= 1;
             }
         } else if (direction == 300.0f) {
-            if (IsOdd(row)) {
+            if (IsOdd(row_pos)) {
+                col_buff += 1;
                 row_buff -= 1;
             } else {
-                col_buff += 1;
-                row_buff = -1;
-            }
-        } else {
-            Debug.Log(string.Format("Break", col_buff, row_buff));
-        }
-        return new Coordinate(col_buff, row_buff);
-    }
-    private Coordinate GetNeighbour_Tile_Odd(Coordinate coord, float direction) {
-
-        int row_Val = coord.getRow;
-        int col_buff = coord.getColumn;
-        int row_buff = coord.getRow;
-        if (direction == 00.0f) {
-            col_buff = +1;
-
-        } else if (direction == 60.0f) {
-            if (IsOdd(row_Val)) {
-                row_buff += 1;
-            } else {
-                col_buff += 1;
-                row_buff += 1;
-            }
-        } else if (direction == 120.0f) {
-            if (IsOdd(row_Val)) {
-                col_buff -= 1;
-                row_buff += 1;
-            } else {
-                row_buff += 1;
-            }
-        } else if (direction == 180.0f) {
-            col_buff -= 1;
-        } else if (direction == 240.0f) {
-            if (IsOdd(row_Val)) {
-                col_buff -= 1;
                 row_buff -= 1;
-            } else {
-                row_buff = -1;
-            }
-        } else if (direction == 300.0f) {
-            if (IsOdd(row_Val)) {
-                row_buff -= 1;
-            } else {
-                col_buff += 1;
-                row_buff = -1;
             }
         } else {
             Debug.Log(string.Format("Break", col_buff, row_buff));
